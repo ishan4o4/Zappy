@@ -28,7 +28,6 @@ export default async function shopCategoryHandler(interaction) {
     )
     .setFooter({ text: "Click a button below to buy!" });
 
-  // Create buy buttons for each item
   const rows = [];
   for (let i = 0; i < items.length; i++) {
     rows.push(

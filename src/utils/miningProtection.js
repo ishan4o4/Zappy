@@ -1,4 +1,4 @@
-// utils/miningProtection.js
+
 import User from "../models/User.js";
 import { createRandomCaptchaText, generateCaptchaImageBuffer } from "./captcha.js";
 import { AttachmentBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
@@ -44,9 +44,6 @@ export function isLocked(user) {
   return { locked: remaining > 0, remainingMs: Math.max(0, remaining), banned: false };
 }
 
-/**
- * Send mod log with action buttons
- */
 async function sendModLog(client, embed, userId) {
   try {
     const modChannel = await client.channels.fetch(MOD_CHANNEL_ID);
@@ -65,9 +62,6 @@ async function sendModLog(client, embed, userId) {
   }
 }
 
-/**
- * Analyze attempt and decide whether to require captcha or immediately lock.
- */
 export async function analyzeAttemptAndMaybeRequireCaptcha(user, {
   timeSince = Infinity,
   adaptiveCooldown = 5000,
@@ -130,9 +124,6 @@ export async function analyzeAttemptAndMaybeRequireCaptcha(user, {
   return { requireCaptcha: false };
 }
 
-/**
- * Apply strike and lock the user depending on strikes count. Also notify mods.
- */
 export async function applyStrikeAndLock(user, { reason = "Unknown", client = null } = {}) {
   ensureProtectionState(user);
   user.miningProtection.strikes = (user.miningProtection.strikes || 0) + 1;
@@ -142,24 +133,24 @@ export async function applyStrikeAndLock(user, { reason = "Unknown", client = nu
   let lockMs;
 
   if (strikes === 1) {
-    lockMs = 0; // warning
+    lockMs = 0; 
   } else if (strikes === 2) {
-    lockMs = 2 * 60 * 1000; // 2 min
+    lockMs = 2 * 60 * 1000; 
   } else if (strikes === 3) {
-    lockMs = 10 * 60 * 1000; // 10 min
+    lockMs = 10 * 60 * 1000; 
   } else if (strikes === 4) {
-    lockMs = 60 * 60 * 1000; // 1 hour
+    lockMs = 60 * 60 * 1000; 
   } else if (strikes === 5) {
-    lockMs = 6 * 60 * 60 * 1000; // 6 hours
+    lockMs = 6 * 60 * 60 * 1000; 
   } else if (strikes === 6) {
-    lockMs = 24 * 60 * 60 * 1000; // 24 hours
+    lockMs = 24 * 60 * 60 * 1000; 
   } else {
-    lockMs = Number.MAX_SAFE_INTEGER; // effectively permanent
+    lockMs = Number.MAX_SAFE_INTEGER; 
   }
 
   user.miningProtection.lockedUntil = new Date(Date.now() + lockMs);
 
-  try { await user.save(); } catch (e) { /* ignore */ }
+  try { await user.save(); } catch (e) {  }
 
   if (client) {
     try {

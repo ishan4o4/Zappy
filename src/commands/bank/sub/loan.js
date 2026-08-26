@@ -24,10 +24,8 @@ export default {
         `❌ Invalid time period. Choose from day(s), week(s), or month(s).\nExample: ${PREFIX}bank loan 5000 month 1`
       );
 
-    // Normalize period (remove plural 's')
     let normalizedPeriod = periodInput.endsWith("s") ? periodInput.slice(0, -1) : periodInput;
 
-    // Define max limits per period type
     let maxAllowed;
     switch (normalizedPeriod) {
       case "day":
@@ -40,7 +38,7 @@ export default {
         maxAllowed = 1;
         break;
       default:
-        maxAllowed = 0; // safeguard
+        maxAllowed = 0; 
     }
 
     if (periodCount > maxAllowed)
@@ -54,7 +52,6 @@ export default {
     let baseMonthlyInterestRate = 0.15 - user.bank.reserved / 100000;
     if (baseMonthlyInterestRate < 0.05) baseMonthlyInterestRate = 0.05;
 
-    // Calculate per-period interest rate
     let periodInterestRate;
     let actualDuration;
 
@@ -76,10 +73,8 @@ export default {
     const totalInterest = Math.floor(amount * periodInterestRate * periodCount);
     const totalRepayment = amount + totalInterest;
 
-    // Calculate due date
     let dueDate = calculateDueDate(normalizedPeriod, periodCount);
 
-    // Grant loan funds to bank balance
     user.bank.bankBalance = (user.bank.bankBalance || 0) + amount;
     user.bank.loan += totalRepayment;
     user.bank.loanIssuedAt = new Date();
@@ -147,7 +142,7 @@ export default {
                 user.bank.reserved = 5000;
                 user.bank.bankAccountId = newBankAccountId;
                 user.bank.bankBalance = 0;
-                user.bank.debt = 0; // Initialize debt
+                user.bank.debt = 0; 
                 user.bank.accountCreatedAt = new Date();
                 user.bank.lastTaxedAt = new Date();
                 user.bank.lastBankTaxedAt = new Date();
@@ -194,7 +189,6 @@ export default {
                     loanDueDate = user.bank.loanDueAt.toLocaleDateString() + " " + user.bank.loanDueAt.toLocaleTimeString();
                 }
 
-                // Calculate loan interest rate
                 let loanInterestRate = 0.15 - user.bank.reserved / 100000;
                 if (loanInterestRate < 0.05) loanInterestRate = 0.05;
 
@@ -285,7 +279,6 @@ export default {
                 });
             }
 
-            // FLEXIBLE LOAN CASE - Updated with debt warning
             case "loan":
                 return interaction.update({
                     content: `**💳 Take a Loan (Flexible Duration - Max 1 Month)**\n\n` +
@@ -319,7 +312,6 @@ export default {
                     embeds: []
                 });
 
-            // For other commands that need parameters, show instruction and disable menu
             case "repay":
             case "reserved":
             case "deposit":

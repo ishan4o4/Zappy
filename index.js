@@ -63,17 +63,14 @@ client.on("ready", async () => {
     await mongoose.connect(process.env.MONGO_URI, { dbName: "economyDB" });
     console.log("📦 MongoDB connected!");
 
-    startPresenceRotation(client, PREFIX, 10000); // bot's Status changes every 10s
-    startMiningTask(); // background mining
+    startPresenceRotation(client, PREFIX, 10000); 
+    startMiningTask(); 
     console.log("⛏️ Mining background task started.");
   } catch (err) {
     console.error("❌ MongoDB connection failed:", err);
   }
 });
 
-// ------------------------------
-// MongoDB & Client graceful shutdown
-// ------------------------------
 async function shutdown() {
   console.log("\n🛑 Shutting down bot...");
   try {
@@ -93,15 +90,13 @@ async function shutdown() {
   process.exit(0);
 }
 
-// Handle process signals
-process.on("SIGINT", shutdown);  // Ctrl+C
-process.on("SIGTERM", shutdown); // kill command / system stop
-process.on("SIGQUIT", shutdown); // optional extra
+process.on("SIGINT", shutdown);  
+process.on("SIGTERM", shutdown); 
+process.on("SIGQUIT", shutdown); 
 
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
-  // ✅ Fetch server prefix dynamically
   let PREFIX = process.env.PREFIX || "!";
   if (message.guild) {
     const guildConfig = await GuildConfig.findOne({ guildId: message.guild.id });

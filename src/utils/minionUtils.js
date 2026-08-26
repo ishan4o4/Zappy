@@ -60,23 +60,14 @@ export async function updateMinionStorage(minion) {
   return minion;
 }
 
-/**
- * Get shop data for a minion by ID
- */
 export function getShopMinion(minionId) {
   return shopItems.Minions.find(m => m.id === minionId);
 }
 
-/**
- * Get ore data by ID
- */
 export function getOreData(oreId) {
   return shopItems.Ores.find(o => o.id === oreId);
 }
 
-/**
- * Calculate mining progress for a minion
- */
 export function calculateMiningProgress(minion, shopData, currentTime = new Date()) {
   const secondsSinceLastCollection = Math.floor((currentTime - minion.lastCollected) / 1000);
   const completedCycles = Math.floor(secondsSinceLastCollection / shopData.speed);
@@ -91,9 +82,6 @@ export function calculateMiningProgress(minion, shopData, currentTime = new Date
   };
 }
 
-/**
- * Calculate potential ores that could be mined
- */
 export function calculatePotentialOres(completedCycles, shopData) {
   let totalOres = 0;
   
@@ -107,18 +95,12 @@ export function calculatePotentialOres(completedCycles, shopData) {
   return totalOres;
 }
 
-/**
- * Create a progress bar string
- */
 export function createProgressBar(percentage, length = 10) {
   const filledBars = Math.floor((percentage / 100) * length);
   const emptyBars = length - filledBars;
   return "▓".repeat(filledBars) + "░".repeat(emptyBars);
 }
 
-/**
- * Format duration from seconds to human readable
- */
 export function formatDuration(seconds) {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -133,9 +115,6 @@ export function formatDuration(seconds) {
   }
 }
 
-/**
- * Get minion status based on current state
- */
 export function getMinionStatus(minion, shopData, currentTime = new Date()) {
   const progress = calculateMiningProgress(minion, shopData, currentTime);
   const potentialOres = calculatePotentialOres(progress.completedCycles, shopData);
@@ -165,9 +144,6 @@ export function getMinionStatus(minion, shopData, currentTime = new Date()) {
   }
 }
 
-/**
- * Validate slot number
- */
 export function validateSlotNumber(slotNum, maxSlots = 5) {
   const num = parseInt(slotNum, 10);
   
@@ -184,9 +160,6 @@ export function validateSlotNumber(slotNum, maxSlots = 5) {
   };
 }
 
-/**
- * Group minions by ore type
- */
 export function groupMinionsByOre(minions) {
   const groups = {};
   

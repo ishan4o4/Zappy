@@ -15,7 +15,6 @@ export default {
     const prefix = process.env.PREFIX || "!";
     const zappcoinEmoji = "<:zappcoin:1410248547781185567>";
 
-    // Category Dropdown
     const categoryRow = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId("shop-category")
@@ -41,24 +40,20 @@ export default {
         text: "🔥 Zapp Economy v1.0 • Click a category to start shopping!",
       });
 
-    // Send shop UI
     const shopMessage = await message.reply({
       embeds: [embed],
       components: [categoryRow],
     });
 
-    // Store current state for expiration
     let currentEmbed = embed;
     let currentComponents = [categoryRow];
 
-    // Collector
     const filter = (i) => i.user.id === message.author.id;
     const collector = shopMessage.createMessageComponentCollector({
       filter,
       time: 30000,
     });
 
-    // Timeout reset
     let timeout;
     const resetTimeout = () => {
       if (timeout) clearTimeout(timeout);
@@ -71,7 +66,7 @@ export default {
 
     collector.on("collect", async (interaction) => {
       if (interaction.customId === "shop-category") {
-        resetTimeout(); // Reset timer only on category select
+        resetTimeout(); 
 
         const result = await handleShopCategory(
           interaction,
@@ -85,7 +80,7 @@ export default {
           currentComponents = result.components;
         }
       } else if (interaction.customId.startsWith("shop-buy-")) {
-        // Do NOT reset timeout on purchase actions
+        
         await handleShopBuy(
           interaction,
           message.author.id,
@@ -129,8 +124,6 @@ export default {
     });
   },
 };
-
-// ------------------ HANDLERS ------------------
 
 export async function handleShopCategory(
   interaction,
@@ -234,10 +227,7 @@ export async function handleShopCategory(
   if (category !== "Ores") {
     const buyOptions = items.map((i) => {
       const emoji = i.emoji ? i.emoji.replace(/\\_/g, "_") : getMinionEmoji(i.id);
-      // Discord SelectMenuEmoji requires name or id, but cannot take raw emoji string alone for custom emoji.
-      // If emoji is a custom Discord emoji string like '<:name:id>', provide it in 'id' property, and 'name' must match emoji name. 
-      // But Discord.js simplifies by accepting 'name' alone for unicode emojis.
-      // To avoid issues, if emoji is a custom emote string like "<:zappcoin:123>", strip to id
+
       const customEmojiMatch = emoji.match(/^<a?:([^:]+):(\d+)>$/);
       if (customEmojiMatch) {
         return {
@@ -251,7 +241,7 @@ export async function handleShopCategory(
           },
         };
       }
-      // Unicode or fallback emoji:
+      
       return {
         label: i.name.length > 100 ? i.name.slice(0, 97) + "..." : i.name,
         description: `${i.cost} ZappCoins`,
@@ -285,7 +275,6 @@ export async function handleShopBuy(
 
   if (resetTimeout) resetTimeout();
 
-  // Defer update to acknowledge interaction and avoid double response errors
   if (!interaction.deferred && !interaction.replied) {
     await interaction.deferUpdate();
   }
@@ -383,7 +372,6 @@ export async function handleShopBuy(
   }
 }
 
-// Helper: Minion Emoji
 function getMinionEmoji(minionId) {
   const oreType = minionId.split("_")[0];
   const oreData = shopItems.Ores.find(o => o.id === oreType);

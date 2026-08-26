@@ -17,17 +17,14 @@ export default {
       return message.reply(`❌ You need to register first with \`${prefix}register\`.`);
     }
 
-    // Initialize inventory if not exists
     if (!user.inventory) {
       user.inventory = { pickaxes: [], minions: [], ores: new Map() };
       await user.save();
     }
 
-    // Fetch minions mining state from DB to get up-to-date storage
     const dbMinions = await Minion.find({ userId: message.author.id });
     const dbMinionsMap = new Map(dbMinions.map(m => [m.minionId, m]));
 
-    // Clean up broken pickaxes from inventory
     let removedPickaxes = [];
     if (user.inventory.pickaxes && user.inventory.pickaxes.length > 0) {
       const originalLength = user.inventory.pickaxes.length;
@@ -51,7 +48,6 @@ export default {
       }
     }
 
-    // Pickaxe info
     let pickaxeInfo = "";
     let currentEquippedInfo = "None equipped";
 
@@ -92,7 +88,6 @@ export default {
       currentEquippedInfo = "❌ No pickaxe equipped\n💡 Buy a pickaxe from the shop";
     }
 
-    // Ores info
     let oresInfo = "No ores";
     let totalOreValue = 0;
 
@@ -120,7 +115,6 @@ export default {
       oresInfo = oreList.join("\n\n");
     }
 
-    // Minions info - use DB storage if available
     let minionsInfo = "No minions";
 
     if (user.inventory.minions && user.inventory.minions.length > 0) {

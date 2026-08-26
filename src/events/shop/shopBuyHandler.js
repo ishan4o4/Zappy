@@ -21,10 +21,8 @@ export default async function shopBuyHandler(interaction) {
     return interaction.reply({ content: "❌ Not enough ZappCoins!", ephemeral: true });
   }
 
-  // Deduct coins
   user.balance -= item.cost;
 
-  // Add item
   if (category === "Pickaxes") {
     user.pickaxe = {
       name: item.name,

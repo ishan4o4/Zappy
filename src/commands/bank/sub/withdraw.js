@@ -79,7 +79,7 @@ export default {
                 user.bank.reserved = 5000;
                 user.bank.bankAccountId = newBankAccountId;
                 user.bank.bankBalance = 0;
-                user.bank.debt = 0; // Initialize debt
+                user.bank.debt = 0; 
                 user.bank.accountCreatedAt = new Date();
                 user.bank.lastTaxedAt = new Date();
                 user.bank.lastBankTaxedAt = new Date();
@@ -126,7 +126,6 @@ export default {
                     loanDueDate = user.bank.loanDueAt.toLocaleDateString() + " " + user.bank.loanDueAt.toLocaleTimeString();
                 }
 
-                // Calculate loan interest rate
                 let loanInterestRate = 0.15 - user.bank.reserved / 100000;
                 if (loanInterestRate < 0.05) loanInterestRate = 0.05;
 
@@ -217,7 +216,6 @@ export default {
                 });
             }
 
-            // FLEXIBLE LOAN CASE - Updated with debt warning
             case "loan":
                 return interaction.update({
                     content: `**💳 Take a Loan (Flexible Duration - Max 1 Month)**\n\n` +
@@ -251,7 +249,6 @@ export default {
                     embeds: []
                 });
 
-            // For other commands that need parameters, show instruction and disable menu
             case "repay":
             case "reserved":
             case "deposit":

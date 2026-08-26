@@ -1,4 +1,4 @@
-// commands/appeal.js
+
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import User from "../../models/User.js";
 import { clearStrikes } from "../../utils/miningProtection.js";
@@ -19,7 +19,6 @@ export default {
     const user = await User.findOne({ userId });
     if (!user) return message.reply("❌ You don't have an account to appeal for.");
 
-    // Build appeal embed for moderators
     const embed = new EmbedBuilder()
       .setTitle("⚖️ Mining Appeal")
       .setDescription(`User <@${user.userId}> submitted an appeal.`)
@@ -35,7 +34,6 @@ export default {
     const reject = new ButtonBuilder().setCustomId(`appeal_reject_${user.userId}`).setLabel("Reject").setStyle(ButtonStyle.Danger);
     const row = new ActionRowBuilder().addComponents(approve, reject);
 
-    // send to mod channel
     const modChannel = await message.client.channels.fetch(MOD_CHANNEL_ID);
     if (!modChannel) {
       return message.reply("❌ Moderator channel not found. Contact admins.");
@@ -43,21 +41,19 @@ export default {
 
     const sent = await modChannel.send({ content: `<@&${modChannel.guild?.roles?.moderator || ""}>`, embeds: [embed], components: [row] });
 
-    // Inform user
     await message.reply("✅ Your appeal has been submitted to moderators. You will be notified of the decision.");
 
-    // Create a collector on the mod message for button clicks (timeout in e.g. 3 days)
     const filter = i => i.isButton();
-    const collector = sent.createMessageComponentCollector({ filter, time: 3 * 24 * 60 * 60 * 1000 }); // 3 days
+    const collector = sent.createMessageComponentCollector({ filter, time: 3 * 24 * 60 * 60 * 1000 }); 
 
     collector.on("collect", async (interaction) => {
-      // Ensure only moderators can approve/reject
+      
       const member = interaction.member;
       if (!member?.permissions?.has("ManageGuild")) {
         return interaction.reply({ content: "❌ You must be a moderator to perform this action.", ephemeral: true });
       }
 
-      const [action, , targetUserId] = interaction.customId.split("_"); // e.g. appeal_approve_<userId>
+      const [action, , targetUserId] = interaction.customId.split("_"); 
       if (!targetUserId) return interaction.reply({ content: "Invalid action.", ephemeral: true });
 
       const targetUser = await User.findOne({ userId: targetUserId });
@@ -72,7 +68,7 @@ export default {
         try {
           const dm = await message.client.users.fetch(targetUserId);
           await dm.send(`✅ Your appeal has been approved by a moderator. Your mining strikes have been reset. You may resume normal activity.`);
-        } catch (e) { /* ignore DM failures */ }
+        } catch (e) {  }
       } else {
         await interaction.update({ content: `❌ Appeal rejected by <@${interaction.user.id}>.`, embeds: [], components: [] });
         try {
@@ -83,7 +79,7 @@ export default {
     });
 
     collector.on("end", async () => {
-      // disable buttons after timeout
+      
       try { await sent.edit({ components: [] }); } catch (e) {}
     });
   }

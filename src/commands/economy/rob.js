@@ -5,14 +5,13 @@ import { payDebtFromEarnings } from "../../utils/bankHelpers.js";
 const robCooldowns = new Map();
 
 function weightedStealAmount(minPercent, maxPercent) {
-  // Weighted probabilities for steal percentages (descending likelihood)
-  // More likely small %, less likely large %
+
   const weights = [
-    { percent: 0.05, weight: 50 },  // 5%
-    { percent: 0.10, weight: 25 },  // 10%
-    { percent: 0.20, weight: 15 },  // 20%
-    { percent: 0.35, weight: 7 },   // 35%
-    { percent: 0.50, weight: 3 },   // 50%
+    { percent: 0.05, weight: 50 },  
+    { percent: 0.10, weight: 25 },  
+    { percent: 0.20, weight: 15 },  
+    { percent: 0.35, weight: 7 },   
+    { percent: 0.50, weight: 3 },   
   ];
   const totalWeight = weights.reduce((sum, w) => sum + w.weight, 0);
   let random = Math.random() * totalWeight;
@@ -20,7 +19,7 @@ function weightedStealAmount(minPercent, maxPercent) {
     if (random < entry.weight) return entry.percent;
     random -= entry.weight;
   }
-  return 0.05; // fallback
+  return 0.05; 
 }
 
 export default {
@@ -39,7 +38,6 @@ export default {
       return message.reply("❌ You cannot rob yourself!");
     }
 
-    // 1 minute cooldown
     const cooldown = 60 * 1000;
     const lastRob = robCooldowns.get(authorId) || 0;
     const now = Date.now();
@@ -62,10 +60,9 @@ export default {
       return message.reply("❌ Target must have more than 5,500 in wallet to be robbed.");
     }
 
-    // 80% chance success
     const success = Math.random() < 0.8;
     if (!success) {
-      // On failure, robbers lose 10% of their balance as penalty
+      
       const penalty = Math.min(Math.floor(user.balance * 0.1), user.balance);
       user.balance -= penalty;
       await user.save();
@@ -79,7 +76,6 @@ export default {
       return message.reply({ embeds: [failEmbed] });
     }
 
-    // Calculate stolen amount based on weighted percentages
     const stealPercent = weightedStealAmount(0.05, 0.5);
     const stolenAmount = Math.max(1, Math.floor(victim.balance * stealPercent));
 

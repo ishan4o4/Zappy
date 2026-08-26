@@ -1,4 +1,4 @@
-import { runLoanCollection, runTaxDeduction } from "../utils/bankHelpers.js"; // adjust the path accordingly
+import { runLoanCollection, runTaxDeduction } from "../utils/bankHelpers.js"; 
 
 export default {
   name: "ready",
@@ -6,10 +6,8 @@ export default {
   async execute(client) {
     console.log("⚙️ Running scheduled maintenance tasks...");
 
-    // Optional: prevent overlapping runs
     let isRunning = false;
 
-    // Initial run (both)
     try {
       console.log("🚀 Initial scheduled tasks: loan collection + tax/interest...");
       await runLoanCollection(client);
@@ -19,7 +17,6 @@ export default {
       console.error("❌ Error during initial scheduled tasks:", error);
     }
 
-    // Combined schedule: run both every 1 day
     setInterval(async () => {
       if (isRunning) {
         console.warn("⏳ Previous scheduled run still in progress. Skipping this tick.");

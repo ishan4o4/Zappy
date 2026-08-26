@@ -73,12 +73,11 @@ export default {
 
     collector.on("collect", async (interaction) => {
       if (interaction.customId === "agree_terms") {
-        // Disable button upon interaction
+        
         const disabledRow = new ActionRowBuilder().addComponents(
           agreeButton.setDisabled(true)
         );
 
-        // Create user account
         user = new User({
           userId: message.author.id,
           agreedToTerms: true,
@@ -98,7 +97,7 @@ export default {
 
     collector.on("end", async (_, reason) => {
       if (reason === "time") {
-        // If no response, disable button
+        
         const disabledRow = new ActionRowBuilder().addComponents(
           agreeButton.setDisabled(true)
         );

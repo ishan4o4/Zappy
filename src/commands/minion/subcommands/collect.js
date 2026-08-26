@@ -13,7 +13,6 @@ export default {
       return message.reply(`⚠️ Use \`${prefix}minion collect <slot|all>\``);
     }
 
-    // === NEW: Prevent collection if overall ore storage exceeds cap ===
     let totalStoredOre = 0;
     for (const qty of (user.inventory.ores?.values() || [])) {
       totalStoredOre += qty;
@@ -24,7 +23,6 @@ export default {
         `💡 Please sell some ores with \`${prefix}sell\` before collecting from minions.`
       );
     }
-    // ===============================================================
 
     let minions = [];
     if (target === "all") {
@@ -61,7 +59,6 @@ export default {
         continue;
       }
 
-      // Recalculate total before adding this minion's storage
       totalStoredOre = 0;
       for (const qty of (user.inventory.ores?.values() || [])) {
         totalStoredOre += qty;
@@ -76,9 +73,7 @@ export default {
         });
         continue;
       }
-      // ==============================================================================
 
-      // Add ores from storage to user inventory
       const oreType = minion.ore;
       const userOres = user.inventory.ores || new Map();
       const currentQty = userOres.get(oreType) ?? 0;

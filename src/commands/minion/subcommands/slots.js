@@ -7,11 +7,10 @@ export default {
     const prefix = process.env.PREFIX || "!";
     const userId = message.author.id;
 
-    // Get all active minions (equipped in slots)
     const activeMinions = await Minion.find({ 
       userId, 
       startedAt: { $ne: null } 
-    }).sort({ startedAt: 1 }); // Sort by when they were started
+    }).sort({ startedAt: 1 }); 
 
     if (activeMinions.length === 0) {
       const noActiveEmbed = new EmbedBuilder()
@@ -45,13 +44,11 @@ export default {
       const shopData = shopItems.Minions.find(m => m.id === minion.minionId);
       if (!shopData) return;
 
-      // Calculate mining progress
       const secondsSinceStart = Math.floor((now - minion.lastCollected) / 1000);
       const cycleProgress = secondsSinceStart % shopData.speed;
       const completedCycles = Math.floor(secondsSinceStart / shopData.speed);
       const progressPercentage = Math.floor((cycleProgress / shopData.speed) * 100);
 
-      // Calculate potential ores mined (but not yet collected)
       let potentialOres = 0;
       for (let i = 0; i < completedCycles; i++) {
         potentialOres += Math.floor(
@@ -62,13 +59,11 @@ export default {
       const actualStorage = Math.min(minion.storage + potentialOres, minion.capacity);
       const isFull = actualStorage >= minion.capacity;
 
-      // Progress bar
       const progressBarLength = 10;
       const filledBars = Math.floor((progressPercentage / 100) * progressBarLength);
       const emptyBars = progressBarLength - filledBars;
       const progressBar = "▓".repeat(filledBars) + "░".repeat(emptyBars);
 
-      // Status indicators
       const statusEmoji = isFull ? "🔴" : potentialOres > 0 ? "🟡" : "🟢";
       const statusText = isFull ? "Storage Full!" : potentialOres > 0 ? "Ready to Collect" : "Mining...";
 
@@ -89,7 +84,6 @@ export default {
       });
     });
 
-    // Add available slots info if user has unused slots
     const availableSlots = user.minionSlots - activeMinions.length;
     if (availableSlots > 0) {
       embed.addFields({

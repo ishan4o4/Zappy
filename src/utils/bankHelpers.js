@@ -1,7 +1,6 @@
 import { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } from "discord.js";
 import User from "../models/User.js";
 
-// Shared timeout manager
 const bankTimeouts = new Map();
 
 export function createDropdown() {
@@ -115,11 +114,10 @@ export async function runLoanCollection(client) {
   const COLLECTION_CHANNEL_ID = process.env.BANK_TAX_CHANNEL_ID || null;
   const now = new Date();
 
-  // Find users with overdue loans
   const users = await User.find({
     "bank.hasAccount": true,
     "bank.loan": { $gt: 0 },
-    "bank.loanDueAt": { $lte: now } // corrected field to loanDueAt
+    "bank.loanDueAt": { $lte: now } 
   });
 
   for (const user of users) {
@@ -127,7 +125,6 @@ export async function runLoanCollection(client) {
     let collectedAmount = 0;
     let collectionSources = [];
 
-    // 1. Deduct from reserved balance first
     if (user.bank.reserved > 0) {
       const fromReserved = Math.min(loanDueAmount - collectedAmount, user.bank.reserved);
       user.bank.reserved -= fromReserved;
@@ -135,7 +132,6 @@ export async function runLoanCollection(client) {
       if (fromReserved > 0) collectionSources.push(`Reserved: ${fromReserved.toLocaleString()}`);
     }
 
-    // 2. Deduct from bank balance next
     if (collectedAmount < loanDueAmount && user.bank.bankBalance > 0) {
       const fromBank = Math.min(loanDueAmount - collectedAmount, user.bank.bankBalance);
       user.bank.bankBalance -= fromBank;
@@ -143,7 +139,6 @@ export async function runLoanCollection(client) {
       if (fromBank > 0) collectionSources.push(`Bank: ${fromBank.toLocaleString()}`);
     }
 
-    // 3. Deduct from wallet balance
     if (collectedAmount < loanDueAmount && user.balance > 0) {
       const fromWallet = Math.min(loanDueAmount - collectedAmount, user.balance);
       user.balance -= fromWallet;
@@ -151,20 +146,17 @@ export async function runLoanCollection(client) {
       if (fromWallet > 0) collectionSources.push(`Wallet: ${fromWallet.toLocaleString()}`);
     }
 
-    // 4. If still not fully paid, move remainder to debt
     const remaining = loanDueAmount - collectedAmount;
     if (remaining > 0) {
       user.bank.debt = (user.bank.debt || 0) + remaining;
     }
 
-    // Set loan and due dates cleared
     user.bank.loan = 0;
     user.bank.loanDueAt = null;
     user.bank.loanIssuedAt = null;
 
     await user.save();
 
-    // Optional: Notify in the tax channel
     if (COLLECTION_CHANNEL_ID && collectedAmount > 0) {
       try {
         const channel = await client.channels.fetch(COLLECTION_CHANNEL_ID);
@@ -181,15 +173,15 @@ export async function runLoanCollection(client) {
 }
 
 export async function runTaxDeduction(client) {
-  const TAX_BANK_PERCENT = 0.02; // 2% monthly tax on bank balance
-  const RESERVED_INTEREST_PERCENT = 0.03; // 3% monthly interest on reserved balance
+  const TAX_BANK_PERCENT = 0.02; 
+  const RESERVED_INTEREST_PERCENT = 0.03; 
   const TAX_CHANNEL_ID = process.env.BANK_TAX_CHANNEL_ID || null;
   const now = new Date();
 
   const users = await User.find({ "bank.hasAccount": true });
 
   for (const user of users) {
-    // Skip user if timestamps missing and initialize
+    
     if (!user.bank.lastBankTaxedAt) {
       user.bank.lastBankTaxedAt = now;
       await user.save();
@@ -201,7 +193,6 @@ export async function runTaxDeduction(client) {
       continue;
     }
 
-    // Ensure bank tax timestamp exists for testing loops
     if (!user.bank.lastBankTaxedAt) {
       user.bank.lastBankTaxedAt = now;
       await user.save();
@@ -229,8 +220,6 @@ export async function runTaxDeduction(client) {
       }
     }
 
-
-    // Treat the “daysSinceInterest” value as seconds (kept name as requested)
     const daysSinceInterest = (now - new Date(user.bank.lastReservedInterestAt)) / (1000 * 60 * 60 * 24);
 
     if (daysSinceInterest >= 30 && user.bank.reserved > 0) {

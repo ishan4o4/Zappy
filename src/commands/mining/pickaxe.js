@@ -16,60 +16,51 @@ export default {
       return message.reply(`❌ Register first with \`${prefix}register\`.`);
     }
 
-    // Initialize inventory if not exists
     if (!user.inventory) {
       user.inventory = { pickaxes: [], minions: [], ores: new Map() };
       await user.save();
     }
 
-    // Clean up broken pickaxes from inventory (but keep default pickaxe always available)
     let removedPickaxes = [];
     if (user.inventory.pickaxes && user.inventory.pickaxes.length > 0) {
       const originalLength = user.inventory.pickaxes.length;
       user.inventory.pickaxes = user.inventory.pickaxes.filter(pickaxe => {
         if (pickaxe.durability <= 0) {
           removedPickaxes.push(pickaxe.name);
-          return false; // Remove broken pickaxe
+          return false; 
         }
-        return true; // Keep working pickaxe
+        return true; 
       });
-      
-      // If currently equipped pickaxe was broken, reset to null (will fall back to default)
+
       if (user.currentPickaxeId) {
         const equippedExists = user.inventory.pickaxes.find(p => p.id === user.currentPickaxeId);
         if (!equippedExists) {
           user.currentPickaxeId = null;
         }
       }
-      
-      // Save changes if any pickaxes were removed
+
       if (originalLength !== user.inventory.pickaxes.length) {
         await user.save();
       }
     }
 
-    // Handle subcommands
     if (args[0] === "equip") {
       return await handleEquipPickaxe(message, args, user, prefix, zappcoinEmoji, removedPickaxes);
     }
 
-    // Show current pickaxe stats
     let currentPickaxe = null;
     let isLegacy = false;
 
-    // Try to find equipped pickaxe from inventory first
     if (user.currentPickaxeId) {
       currentPickaxe = user.inventory.pickaxes?.find(p => p.id === user.currentPickaxeId);
     }
 
-    // Fall back to legacy/default pickaxe if no equipped pickaxe found
     if (!currentPickaxe && user.pickaxe) {
       currentPickaxe = user.pickaxe;
       isLegacy = true;
-      
-      // Make sure default wooden pickaxe is never broken
+
       if (currentPickaxe.durability <= 0) {
-        currentPickaxe.durability = 1; // Reset to 1 if somehow it got to 0
+        currentPickaxe.durability = 1; 
         await user.save();
       }
     }
@@ -78,19 +69,16 @@ export default {
       return message.reply(`❌ You don't have any pickaxe equipped!\n💡 Use \`${prefix}shop\` to buy a pickaxe first.`);
     }
 
-    // Get pickaxe emoji and data
     const pickaxeEmoji = isLegacy 
       ? getPickaxeEmojiByName(currentPickaxe.name)
       : getPickaxeEmoji(currentPickaxe.id);
 
     const { name, durability, maxDurability, power } = currentPickaxe;
 
-    // Create durability bar
     const durabilityPercent = durability / maxDurability;
     const filledBars = Math.floor(durabilityPercent * 10);
     const emptyBars = 10 - filledBars;
-    
-    // Color durability bar based on condition
+
     let durabilityBar;
     if (durabilityPercent > 0.7) {
       durabilityBar = "🟩".repeat(filledBars) + "⬜".repeat(emptyBars);
@@ -100,7 +88,6 @@ export default {
       durabilityBar = "🟥".repeat(filledBars) + "⬜".repeat(emptyBars);
     }
 
-    // Get unlocks info if available
     let unlocksInfo = "";
     if (!isLegacy) {
       const pickaxeData = shopItems.Pickaxes.find(p => p.id === currentPickaxe.id);
@@ -108,20 +95,18 @@ export default {
         unlocksInfo = `\n🔓 **Unlocks:** ${pickaxeData.unlocks.join(", ")}`;
       }
     } else {
-      // For legacy pickaxe, get unlocks from shopItems
+      
       const pickaxeData = shopItems.Pickaxes.find(p => p.name === currentPickaxe.name);
       if (pickaxeData && pickaxeData.unlocks) {
         unlocksInfo = `\n🔓 **Unlocks:** ${pickaxeData.unlocks.join(", ")}`;
       }
     }
 
-    // Add special note for default pickaxe
     let specialNote = "";
     if (isLegacy && currentPickaxe.name === "Wooden Pickaxe") {
       specialNote = "\n🛡️ *This is your unbreakable starter pickaxe*";
     }
 
-    // Create description with cleanup notification if any pickaxes were removed
     let description = `**${name}**${isLegacy ? " *(Default)*" : ""}${unlocksInfo}${specialNote}`;
     if (removedPickaxes.length > 0) {
       description += `\n\n🗑️ **Cleanup:** Removed ${removedPickaxes.length} broken pickaxe(s): ${removedPickaxes.join(", ")}`;
@@ -157,22 +142,19 @@ export default {
   },
 };
 
-// Handle equipping pickaxes
 async function handleEquipPickaxe(message, args, user, prefix, zappcoinEmoji, removedPickaxes) {
   if (!args[1]) {
-    // Show available pickaxes to equip (including default if exists)
+    
     let pickaxeList = "";
     let availableCount = 0;
-    
-    // Add default pickaxe if exists
+
     if (user.pickaxe && user.pickaxe.name) {
       const emoji = getPickaxeEmojiByName(user.pickaxe.name);
       const isEquipped = !user.currentPickaxeId ? " 🔥 *(Equipped)*" : "";
       pickaxeList += `**0.** ${emoji} ${user.pickaxe.name} *(Default)*${isEquipped}\n   ⚡ Power: ${user.pickaxe.power} | 🛡️ ${user.pickaxe.durability}/${user.pickaxe.maxDurability} | 📦 Unbreakable`;
       availableCount++;
     }
-    
-    // Add inventory pickaxes
+
     if (user.inventory.pickaxes && user.inventory.pickaxes.length > 0) {
       const inventoryList = user.inventory.pickaxes.map((pickaxe, index) => {
         const emoji = getPickaxeEmoji(pickaxe.id);
@@ -210,18 +192,17 @@ async function handleEquipPickaxe(message, args, user, prefix, zappcoinEmoji, re
   let targetPickaxe = null;
   let isDefault = false;
 
-  // Try to find by number first
   if (!isNaN(pickaxeId)) {
     const index = parseInt(pickaxeId);
     if (index === 0 && user.pickaxe && user.pickaxe.name) {
-      // Equip default pickaxe
+      
       targetPickaxe = user.pickaxe;
       isDefault = true;
     } else if (index > 0 && user.inventory.pickaxes) {
       targetPickaxe = user.inventory.pickaxes[index - 1];
     }
   } else {
-    // Try to find by ID or name
+    
     if (user.inventory.pickaxes) {
       targetPickaxe = user.inventory.pickaxes.find(p => 
         p.id === pickaxeId || 
@@ -235,7 +216,6 @@ async function handleEquipPickaxe(message, args, user, prefix, zappcoinEmoji, re
     return message.reply(`❌ Pickaxe not found!\n💡 Use \`${prefix}pickaxe equip\` to see available pickaxes.`);
   }
 
-  // Check if already equipped
   if (isDefault && !user.currentPickaxeId) {
     const emoji = getPickaxeEmojiByName(targetPickaxe.name);
     return message.reply(`${emoji} **${targetPickaxe.name}** *(Default)* is already equipped!`);
@@ -244,9 +224,8 @@ async function handleEquipPickaxe(message, args, user, prefix, zappcoinEmoji, re
     return message.reply(`${emoji} **${targetPickaxe.name}** is already equipped!`);
   }
 
-  // Equip the pickaxe
   if (isDefault) {
-    user.currentPickaxeId = null; // null means use default
+    user.currentPickaxeId = null; 
   } else {
     user.currentPickaxeId = targetPickaxe.id;
   }
@@ -268,7 +247,6 @@ async function handleEquipPickaxe(message, args, user, prefix, zappcoinEmoji, re
   return message.reply({ embeds: [embed] });
 }
 
-// Helper function to get pickaxe emoji by ID
 function getPickaxeEmoji(pickaxeId) {
   const normalizedId = pickaxeId.replace(/\\_/g, '_');
   const pickaxeData = shopItems.Pickaxes.find(p => 
@@ -282,7 +260,6 @@ function getPickaxeEmoji(pickaxeId) {
   return "⛏️";
 }
 
-// Helper function to get pickaxe emoji by name (for legacy support)
 function getPickaxeEmojiByName(pickaxeName) {
   const pickaxeData = shopItems.Pickaxes.find(p => p.name === pickaxeName);
   if (pickaxeData && pickaxeData.emoji) {

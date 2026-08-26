@@ -15,10 +15,9 @@ export default {
     }
 
     const now = Date.now();
-    const cooldown = 24 * 60 * 60 * 1000; // 24h in ms
+    const cooldown = 24 * 60 * 60 * 1000; 
     const timeSinceLast = now - user.lastDaily;
 
-    // --- COOLDOWN CHECK ---
     if (timeSinceLast < cooldown) {
       const remaining = cooldown - timeSinceLast;
       const hours = Math.floor(remaining / 3600000);
@@ -35,35 +34,30 @@ export default {
       return message.reply({ embeds: [embed] });
     }
 
-    // --- STREAK HANDLING ---
     const within48h = timeSinceLast <= 2 * cooldown;
     if (within48h) {
       user.dailyStreak = (user.dailyStreak || 0) + 1;
     } else {
-      // Streak broke — reset & log the date
+      
       user.lastStreakReset = new Date();
       user.dailyStreak = 1;
     }
 
-    // --- REWARD CALCULATION ---
-    const baseReward = Math.floor(Math.random() * 50) + 50; // 50–100 coins
-    const streakBonus = Math.floor(baseReward * Math.min(user.dailyStreak * 0.05, 1)); // +5% per day, max +100%
+    const baseReward = Math.floor(Math.random() * 50) + 50; 
+    const streakBonus = Math.floor(baseReward * Math.min(user.dailyStreak * 0.05, 1)); 
     const totalReward = baseReward + streakBonus;
 
-    // --- JACKPOT SYSTEM ---
     let jackpotMessage = "";
-    if (Math.random() < 0.02) { // 2% jackpot chance
-      const jackpotAmount = Math.floor(Math.random() * 500) + 500; // 500–1000 bonus
+    if (Math.random() < 0.02) { 
+      const jackpotAmount = Math.floor(Math.random() * 500) + 500; 
       jackpotMessage = `🎉 **JACKPOT!** You won an extra **${jackpotAmount} coins**!\n`;
       user.balance += jackpotAmount;
     }
 
-    // --- APPLY REWARD (with debt deduction) ---
     user.balance += await payDebtFromEarnings(user, totalReward);
     user.lastDaily = now;
     await user.save();
 
-    // --- RESPONSE EMBED ---
     const embed = new EmbedBuilder()
       .setColor("Green")
       .setTitle("💰 Daily Reward")

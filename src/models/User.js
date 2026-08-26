@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
     hasAccount: { type: Boolean, default: false },
     loan: { type: Number, default: 0 },
     reserved: { type: Number, default: 0 },
-    bankBalance: { type: Number, default: 0 }, // deposited bank balance
+    bankBalance: { type: Number, default: 0 }, 
     bankAccountId: { type: String, default: null },
     accountCreatedAt: { type: Date, default: null },
     lastTaxedAt: { type: Date, default: null },
@@ -62,21 +62,19 @@ const userSchema = new mongoose.Schema({
       }
     ]
   },
-  currentPickaxeId: { type: String, default: null }, // ID of currently equipped pickaxe from inventory
-  minionSlots: { type: Number, default: 1 }, // start with 1 slot
+  currentPickaxeId: { type: String, default: null }, 
+  minionSlots: { type: Number, default: 1 }, 
 
-  // how many successful mines the user completed (used by reward logic)
   minesCount: { type: Number, default: 0 },
 
-  // --------- persistent mining protection state ----------
   miningProtection: {
-    strikes: { type: Number, default: 0 },            // number of strikes (escalates penalties)
-    lockedUntil: { type: Date, default: null },       // if set, user cannot mine until this date
-    lastFlaggedAt: { type: Date, default: null },    // last time flagged
-    lastTimestamps: { type: [Number], default: [] }, // last N timestamps for server-side heuristics (ms)
-    // NEW fields for forced-captcha logic / counting command invocations:
-    commandCount: { type: Number, default: 0 },       // increments on every /mine invocation
-    captchaThreshold: { type: Number, default: null } // persisted threshold (e.g. 4..6)
+    strikes: { type: Number, default: 0 },            
+    lockedUntil: { type: Date, default: null },       
+    lastFlaggedAt: { type: Date, default: null },    
+    lastTimestamps: { type: [Number], default: [] }, 
+    
+    commandCount: { type: Number, default: 0 },       
+    captchaThreshold: { type: Number, default: null } 
   }
 });
 

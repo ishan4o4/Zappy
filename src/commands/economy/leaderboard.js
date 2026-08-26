@@ -9,8 +9,6 @@ export default {
   async execute(message) {
     const PREFIX = process.env.PREFIX || "!";
 
-    // Fetch top 10 users sorted by total balance = wallet + bankBalance + reserved (where bank account exists)
-    // Use MongoDB aggregation to calculate the sum
     const topUsers = await User.aggregate([
       {
         $addFields: {
@@ -41,7 +39,6 @@ export default {
       .setTitle("🏆 Economy Leaderboard")
       .setDescription("Top 10 users by total balance (wallet + bank + reserved):");
 
-    // Build leaderboard description string
     let description = "";
     for (let i = 0; i < topUsers.length; i++) {
       const user = topUsers[i];

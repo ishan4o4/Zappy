@@ -32,7 +32,7 @@ async function miningBackgroundTask() {
 
       try {
         await minion.save();
-        // console.log(`Minion ${minion.minionId}: +${oresToAdd} ores (storage: ${minion.storage}/${minion.capacity})`);
+        
       } catch (err) {
         console.error(`Failed saving minion ${minion.minionId}:`, err);
       }
@@ -43,7 +43,7 @@ async function miningBackgroundTask() {
 }
 
 export function startMiningTask(intervalMs = 60 * 1000) {
-  // Run immediately then at interval
+  
   miningBackgroundTask();
   return setInterval(miningBackgroundTask, intervalMs);
 }

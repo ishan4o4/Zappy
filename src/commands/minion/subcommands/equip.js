@@ -15,11 +15,9 @@ export default {
     if (isNaN(slotNum) || slotNum < 1 || slotNum > user.minionSlots)
       return message.reply(`⚠️ Slot must be 1 to ${user.minionSlots}`);
 
-    // Check if user owns the minion in inventory
     const inventoryMinion = user.inventory.minions?.find(m => m.id === minionId);
     if (!inventoryMinion) return message.reply("❌ You don't own this minion.");
 
-    // Check for equipped minions and slots
     const equippedMinions = await Minion.find({ userId, startedAt: { $ne: null } }).sort({ startedAt: 1 });
     if (equippedMinions.length >= slotNum) {
       const occupying = equippedMinions[slotNum - 1];

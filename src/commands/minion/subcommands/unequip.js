@@ -36,7 +36,6 @@ export default {
 
     const slotNum = parseInt(args[0], 10);
 
-    // Validate slot number dynamically from user's minionSlots
     if (isNaN(slotNum) || slotNum < 1 || slotNum > user.minionSlots) {
       const errorEmbed = new EmbedBuilder()
         .setTitle("❌ Invalid Slot Number")
@@ -46,13 +45,11 @@ export default {
       return message.channel.send({ embeds: [errorEmbed] });
     }
 
-    // Get all active minions sorted by start time
     const activeMinions = await Minion.find({
       userId,
       startedAt: { $ne: null },
     }).sort({ startedAt: 1 });
 
-    // Check if minion exists in the specified slot
     const targetMinion = activeMinions[slotNum - 1];
 
     if (!targetMinion) {
@@ -68,10 +65,8 @@ export default {
       return message.channel.send({ embeds: [errorEmbed] });
     }
 
-    // Normalize minion ID to base ID by removing suffix (_1, _2, etc.)
     const baseMinionId = targetMinion.minionId.replace(/_\d+$/, "");
 
-    // Get shop data with normalized ID
     const shopData = shopItems.Minions.find((m) => m.id === baseMinionId);
     if (!shopData) {
       const errorEmbed = new EmbedBuilder()
@@ -82,7 +77,6 @@ export default {
       return message.channel.send({ embeds: [errorEmbed] });
     }
 
-    // Calculate final mining results before unequipping
     const now = new Date();
     const secondsSinceLastCollection = Math.floor((now - targetMinion.lastCollected) / 1000);
     const completedCycles = Math.floor(secondsSinceLastCollection / shopData.speed);
@@ -95,20 +89,16 @@ export default {
         finalOresMined += oreAmount;
       }
 
-      // Apply storage limit
       const availableStorage = targetMinion.capacity - targetMinion.storage;
       finalOresMined = Math.min(finalOresMined, availableStorage);
 
-      // Update storage with final mining results
       targetMinion.storage += finalOresMined;
     }
 
-    // Calculate total work time
     const workDuration = Math.floor((now - targetMinion.startedAt) / 1000);
     const workHours = Math.floor(workDuration / 3600);
     const workMinutes = Math.floor((workDuration % 3600) / 60);
 
-    // Store final stats before unequipping
     const finalStats = {
       workDuration: `${workHours}h ${workMinutes}m`,
       finalStorage: targetMinion.storage,
@@ -117,12 +107,10 @@ export default {
       hasUncollectedOres: targetMinion.storage > 0,
     };
 
-    // Unequip the minion
     targetMinion.startedAt = null;
     targetMinion.lastCollected = now;
     await targetMinion.save();
 
-    // Create success embed
     const oreEmoji = shopItems.Ores.find((o) => o.id === shopData.ore)?.emoji || "⛏️";
 
     const embed = new EmbedBuilder()
@@ -144,7 +132,6 @@ export default {
         }
       );
 
-    // Add warning about uncollected ores
     if (finalStats.hasUncollectedOres) {
       embed.addFields({
         name: "⚠️ Uncollected Ores",
@@ -153,7 +140,6 @@ export default {
       });
     }
 
-    // Add next steps
     embed.addFields({
       name: "💡 Next Steps:",
       value: [

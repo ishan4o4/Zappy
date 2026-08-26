@@ -1,18 +1,9 @@
-// commands/mine.js
+
 import { EmbedBuilder, AttachmentBuilder } from "discord.js";
 import User from "../../models/User.js";
 import { shopItems } from "../../config/shopItems.js";
 import { createRandomCaptchaText, generateCaptchaImageBuffer } from "../../utils/captcha.js";
 import { isLocked, analyzeAttemptAndMaybeRequireCaptcha, handleCaptchaFailure } from "../../utils/miningProtection.js";
-
-/**
- * Updated mine command:
- *  - increments a persistent commandCount on every invocation
- *  - forces captcha when commandCount >= captchaThreshold (random 4..6), BEFORE lock/cooldown/analyzer
- *  - resets commandCount and chooses a new threshold after forcing captcha (persisted)
- *  - captcha flow: 2 attempts, then a final single attempt => handleCaptchaFailure()
- *  - preserves adaptive cooldown, analyzer and the original mining rewards flow
- */
 
 export default {
   name: "mine",
@@ -24,7 +15,6 @@ export default {
     const userId = message.author.id;
     const client = message.client;
 
-    // ensure global captcha sessions map
     if (!global.__MINING_CAPTCHA_SESSIONS) global.__MINING_CAPTCHA_SESSIONS = new Map();
 
     const activeCaptcha = global.__MINING_CAPTCHA_SESSIONS.get(userId);
@@ -36,16 +26,13 @@ export default {
       );
     }
 
-    // Fetch user
     const user = await User.findOne({ userId });
     if (!user) return message.reply(`❌ Register first with \`${prefix}register\`.`);
 
-    // Ensure inventory & protection structure
     if (!user.inventory) user.inventory = { pickaxes: [], minions: [], ores: new Map() };
     if (!user.lastMined) user.lastMined = 0;
     if (typeof user.minesCount !== "number") user.minesCount = 0;
 
-    // Ensure miningProtection and commandCount exist
     if (!user.miningProtection) {
       user.miningProtection = {
         strikes: 0,
@@ -58,20 +45,18 @@ export default {
       await user.save().catch(() => { });
     }
 
-    // ---- NEW: increment persistent commandCount EVERY invocation (counts attempts to run mine)
     user.miningProtection.commandCount = (user.miningProtection.commandCount || 0) + 1;
-    // ensure threshold exists (4..6)
+    
     if (!user.miningProtection.captchaThreshold) {
-      user.miningProtection.captchaThreshold = 8 + Math.floor(Math.random() * 7); // 8..14
+      user.miningProtection.captchaThreshold = 8 + Math.floor(Math.random() * 7); 
     }
-    // persist the increment (so it survives restarts)
-    try { await user.save(); } catch (e) { /* ignore save errors */ }
+    
+    try { await user.save(); } catch (e) {  }
 
-    // If commandCount reached threshold -> force captcha NOW (this runs BEFORE lock/cooldown)
     if ((user.miningProtection.commandCount || 0) >= user.miningProtection.captchaThreshold) {
-      // Reset commandCount and set a new threshold, persist immediately
+      
       user.miningProtection.commandCount = 0;
-      user.miningProtection.captchaThreshold = 8 + Math.floor(Math.random() * 7); // new 8..14
+      user.miningProtection.captchaThreshold = 8 + Math.floor(Math.random() * 7); 
       try { await user.save(); } catch (e) { }
 
       const captchaText = createRandomCaptchaText(5);
@@ -95,7 +80,7 @@ export default {
         const s = global.__MINING_CAPTCHA_SESSIONS.get(userId);
         if (!s) return;
         if (String(m.content).trim().toUpperCase() === String(s.answer).toUpperCase()) {
-          // Passed: clear session, forgive slight strike, persist timestamps & allow reuse
+          
           global.__MINING_CAPTCHA_SESSIONS.delete(userId);
           user.miningProtection.strikes = Math.max(0, (user.miningProtection.strikes || 0) - 1);
           user.miningProtection.lastTimestamps = (user.miningProtection.lastTimestamps || []).slice(-9).concat([Date.now()]);
@@ -106,7 +91,7 @@ export default {
         } else {
           s.attemptsLeft -= 1;
           if (s.attemptsLeft <= 0) {
-            // move to final single attempt
+            
             global.__MINING_CAPTCHA_SESSIONS.delete(userId);
             collector.stop("first_failed");
           } else {
@@ -117,7 +102,7 @@ export default {
       });
 
       collector.on("end", async (_, reason) => {
-        // On timeout or first-failure, present final single-attempt captcha
+        
         if (reason === "first_failed" || reason === "time") {
           const finalText = createRandomCaptchaText(6);
           let finalBuffer = null;
@@ -139,7 +124,7 @@ export default {
             const f = global.__MINING_CAPTCHA_SESSIONS.get(userId);
             if (!f) return;
             if (String(m.content).trim().toUpperCase() === String(f.answer).toUpperCase()) {
-              // passed final
+              
               global.__MINING_CAPTCHA_SESSIONS.delete(userId);
               user.miningProtection.strikes = Math.max(0, (user.miningProtection.strikes || 0) - 1);
               user.miningProtection.lastTimestamps = (user.miningProtection.lastTimestamps || []).slice(-9).concat([Date.now()]);
@@ -148,7 +133,7 @@ export default {
               finalCollector.stop("passed_final");
               return m.reply("✅ Final captcha passed. You may continue mining next time.");
             } else {
-              // failed final -> suspend via handleCaptchaFailure
+              
               global.__MINING_CAPTCHA_SESSIONS.delete(userId);
               finalCollector.stop("failed_final");
               await handleCaptchaFailure(user, { reason: "Failed forced captcha twice", client });
@@ -166,20 +151,15 @@ export default {
         }
       });
 
-      // We forced captcha and require it to be solved — stop further flow
       return;
-    } // End forced captcha check
+    } 
 
-    // ----- Continue original flow (now forced-captcha not active) -----
-
-    // 1) DB lock check (now after forced-captcha)
     const lock = isLocked(user);
     if (lock.locked) {
       const remaining = Math.ceil(lock.remainingMs / 1000);
       return message.reply(`🔒 Your mining is temporarily locked. Try again in ${remaining}s. Run \`${prefix}appeal\` to appeal.`);
     }
 
-    // 2) Storage cap
     let totalStored = 0;
     for (const qty of user.inventory.ores.values()) totalStored += qty;
     const STORAGE_CAP = 1000;
@@ -187,7 +167,6 @@ export default {
       return message.reply(`❌ Inventory full (${totalStored}/${STORAGE_CAP}). Clear ores by selling using \`${prefix}sell\` before mining.`);
     }
 
-    // 3) pickaxe selection (unchanged)
     if (user.inventory.pickaxes && user.inventory.pickaxes.length > 0) {
       user.inventory.pickaxes = user.inventory.pickaxes.filter(p => p && p.durability > 0);
       if (user.currentPickaxeId && !user.inventory.pickaxes.find(p => p.id === user.currentPickaxeId)) user.currentPickaxeId = null;
@@ -210,7 +189,6 @@ export default {
     if (currentPickaxe.durability <= 0 && !(isLegacy && currentPickaxe.name === "Wooden Pickaxe")) return message.reply(`❌ Your pickaxe is broken!`);
     if (!pickaxeData) return message.reply("⚠️ Pickaxe data not found.");
 
-    // 4) adaptive cooldown (random 7..15s, preserved)
     const powerFactor = Math.max(1, currentPickaxe.power || 1);
     const baseCooldown = 7000 + Math.floor(Math.random() * (15000 - 7000 + 1));
     const adaptiveCooldown = Math.min(15000 * (1 + powerFactor / 10), baseCooldown + powerFactor * 400);
@@ -223,7 +201,6 @@ export default {
       return message.reply(`⏳ Please wait ${waitSec}s before mining again.`);
     }
 
-    // Build session metrics (median/stdev/minesPerMinute) using lastTimestamps
     let timestamps = (user.miningProtection?.lastTimestamps || []).slice();
     timestamps.push(now2);
     const intervals2 = [];
@@ -241,7 +218,6 @@ export default {
       minesPerMinute = Math.round(perMs * 60000);
     }
 
-    // 5) analyzer (can require captcha or immediate lock)
     const analysis = await analyzeAttemptAndMaybeRequireCaptcha(user, {
       timeSince: timeSince2,
       adaptiveCooldown,
@@ -306,14 +282,11 @@ export default {
       return;
     }
 
-    // 6) Proceed to mining (legitimate)
     user.minesCount = (user.minesCount || 0) + 1;
     user.lastMined = Date.now();
 
-    // Update lastTimestamps persistently (keep last N)
     user.miningProtection.lastTimestamps = (user.miningProtection.lastTimestamps || []).slice(-9).concat([Date.now()]);
 
-    // CLEANUP broken pickaxes
     let removedPickaxes = [];
     if (user.inventory.pickaxes && user.inventory.pickaxes.length > 0) {
       user.inventory.pickaxes = user.inventory.pickaxes.filter(p => {
@@ -323,7 +296,6 @@ export default {
       if (user.currentPickaxeId && !user.inventory.pickaxes.find(p => p.id === user.currentPickaxeId)) user.currentPickaxeId = null;
     }
 
-    // PERFORM mining (same as original)
     const availableOres = (function getCumulativeOres(pickaxeDataLocal) {
       const oreUnlocks = {
         "Wooden Pickaxe": ["stone"],
@@ -369,7 +341,6 @@ export default {
       return results;
     })(availableOres, currentPickaxe.power);
 
-    // Consolidate & update inventory
     let totalValue = 0;
     const consolidated = [];
     for (const f of foundOres) {
@@ -381,18 +352,15 @@ export default {
       if (ex) { ex.quantity += f.quantity; ex.value += val; } else consolidated.push({ ore: f.ore, quantity: f.quantity, value: val, rarity: f.rarity });
     }
 
-    // reduce rewards if user has strikes (probation)
     const strikes = (user.miningProtection?.strikes) || 0;
     const rewardReductionMultiplierForStrikes = 0.5;
     if (strikes > 0) totalValue = Math.floor(totalValue * rewardReductionMultiplierForStrikes);
 
-    // reduce durability
     if (isLegacy) { if (user.pickaxe.name !== "Wooden Pickaxe") user.pickaxe.durability = Math.max(0, user.pickaxe.durability - 1); }
     else { const invPick = user.inventory.pickaxes.find(p => p.id === currentPickaxe.id); if (invPick) invPick.durability = Math.max(0, invPick.durability - 1); }
 
     await user.save();
 
-    // build reply embed
     const pickaxeEmoji = (function getPickaxeEmoji(pickaxeId) {
       const normalizedId = pickaxeId?.replace(/_/g, '_');
       const pickaxeDataFound = shopItems.Pickaxes.find(p => p.id === normalizedId || p.id === pickaxeId || p.id.replace(/_/g, '_') === normalizedId);

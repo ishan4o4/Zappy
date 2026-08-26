@@ -1,4 +1,4 @@
-// utils/captcha.js
+
 import Canvas from "canvas";
 
 const DEFAULTS = {
@@ -8,7 +8,7 @@ const DEFAULTS = {
 };
 
 function randomChar() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // exclude ambiguous chars
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; 
   return chars.charAt(Math.floor(Math.random() * chars.length));
 }
 
@@ -31,14 +31,12 @@ export async function generateCaptchaImageBuffer(
   const canvas = Canvas.createCanvas(width, height);
   const ctx = canvas.getContext("2d");
 
-  // Background gradient
   const bgGradient = ctx.createLinearGradient(0, 0, width, height);
   bgGradient.addColorStop(0, "#0f172a");
   bgGradient.addColorStop(1, "#1e293b");
   ctx.fillStyle = bgGradient;
   ctx.fillRect(0, 0, width, height);
 
-  // fewer noise circles
   for (let i = 0; i < 20; i++) {
     ctx.beginPath();
     ctx.fillStyle = `rgba(${Math.floor(Math.random() * 255)},${Math.floor(
@@ -51,7 +49,6 @@ export async function generateCaptchaImageBuffer(
     ctx.fill();
   }
 
-  // draw each character with **gentle** distortions
   const charSpacing = width / (text.length + 1);
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
@@ -65,11 +62,9 @@ export async function generateCaptchaImageBuffer(
     ctx.save();
     ctx.translate(x, y);
 
-    // smaller rotation (±10° instead of ±20°)
     const angle = (Math.random() * 20 - 10) * (Math.PI / 180);
     ctx.rotate(angle);
 
-    // mild skew
     const skewX = Math.random() * 0.2 - 0.1;
     const skewY = Math.random() * 0.2 - 0.1;
     ctx.transform(1, skewY, skewX, 1, 0, 0);
@@ -82,7 +77,6 @@ export async function generateCaptchaImageBuffer(
     ctx.restore();
   }
 
-  // fewer interference curves
   for (let i = 0; i < 3; i++) {
     ctx.beginPath();
     ctx.moveTo(Math.random() * width, Math.random() * height);
@@ -101,7 +95,6 @@ export async function generateCaptchaImageBuffer(
     ctx.stroke();
   }
 
-  // fewer dots
   for (let i = 0; i < 50; i++) {
     ctx.fillStyle = `rgba(${Math.floor(Math.random() * 255)},${Math.floor(
       Math.random() * 255
@@ -109,7 +102,6 @@ export async function generateCaptchaImageBuffer(
     ctx.fillRect(Math.random() * width, Math.random() * height, 1.5, 1.5);
   }
 
-  // === Softer WAVE DISTORTION ===
   const imgData = ctx.getImageData(0, 0, width, height);
   const src = imgData.data;
   const tempCanvas = Canvas.createCanvas(width, height);
@@ -117,8 +109,8 @@ export async function generateCaptchaImageBuffer(
   const tempImg = tempCtx.createImageData(width, height);
   const dst = tempImg.data;
 
-  const amplitude = 2 + Math.random() * 2; // was 5–10 → now 2–4
-  const frequency = 0.02 + Math.random() * 0.02; // was 0.05–0.1 → now 0.02–0.04
+  const amplitude = 2 + Math.random() * 2; 
+  const frequency = 0.02 + Math.random() * 0.02; 
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {

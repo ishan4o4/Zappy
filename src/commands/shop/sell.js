@@ -16,7 +16,6 @@ export default {
       return message.reply(`❌ Usage: \`${prefix}sell <ore> <amount>\``);
     }
 
-    // Find ore by ID
     const ore = shopItems.Ores.find(o => o.id === id || o.id.replace(/\\_/g, '_') === id);
     if (!ore) {
       return message.reply(`❌ Invalid ore ID. Use ore IDs like: stone, coal, iron, gold, diamond, emerald, netherite`);
@@ -27,34 +26,28 @@ export default {
       return message.reply(`❌ Register first with \`${prefix}register\`.`);
     }
 
-    // Initialize inventory if not exists
     if (!user.inventory) {
       user.inventory = { pickaxes: [], minions: [], ores: new Map() };
     }
 
-    // Check user's ore amount using ore ID (not name)
     const userAmount = user.inventory.ores.get(ore.id) || 0;
     if (userAmount < amount) {
       return message.reply(`❌ You only have **${userAmount}** ${ore.emoji} ${ore.name}.\n💡 Use \`${prefix}inventory\` to see your ores.`);
     }
 
-    // Calculate earnings
     const earned = amount * ore.value;
 
-    // Deduct ores from inventory
     const remainingAmount = userAmount - amount;
     if (remainingAmount === 0) {
-      user.inventory.ores.delete(ore.id); // Remove ore completely if 0 left
+      user.inventory.ores.delete(ore.id); 
     } else {
       user.inventory.ores.set(ore.id, remainingAmount);
     }
 
-    // Add money directly to user's balance or debt if any...
     user.balance += await payDebtFromEarnings(user, earned);
 
     await user.save();
 
-    // Clean emoji display
     const oreEmoji = ore.emoji ? ore.emoji.replace(/\\_/g, '_') : "💎";
 
     return message.reply(

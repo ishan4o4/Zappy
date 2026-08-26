@@ -15,13 +15,12 @@ export default {
     if (message.guild) {
       try {
         const guildConfig = await GuildConfig.findOne({ guildId: message.guild.id });
-        if (guildConfig?.prefix) PREFIX = guildConfig.prefix; // ✅ fixed lowercase key
+        if (guildConfig?.prefix) PREFIX = guildConfig.prefix; 
       } catch (err) {
         console.error("⚠️ Failed to fetch guild prefix:", err);
       }
     }
 
-    // Collect all categories and their commands
     const categories = {};
     client.commands.forEach((cmd) => {
       const category = cmd.category || "General";
@@ -29,7 +28,6 @@ export default {
       categories[category].push(cmd);
     });
 
-    // Default embed (overview)
     const embed = new EmbedBuilder()
       .setColor("Purple")
       .setTitle("📜 Help Menu")
@@ -42,7 +40,6 @@ export default {
       })
       .setTimestamp();
 
-    // Create dropdown options dynamically
     const options = Object.keys(categories).map((cat) => ({
       label: cat,
       description: `View commands in ${cat}`,
@@ -56,16 +53,14 @@ export default {
         .addOptions(options)
     );
 
-    // Send the help menu
     const helpMessage = await message.reply({
       embeds: [embed],
       components: [row],
     });
 
-    // Create a collector for dropdown interaction
     const collector = helpMessage.createMessageComponentCollector({
       componentType: ComponentType.StringSelect,
-      time: 60_000, // 1 min
+      time: 60_000, 
     });
 
     collector.on("collect", async (interaction) => {
@@ -95,7 +90,7 @@ export default {
     });
 
     collector.on("end", () => {
-      // Disable dropdown after timeout
+      
       const disabledRow = new ActionRowBuilder().addComponents(
         new StringSelectMenuBuilder()
           .setCustomId("help-menu")
