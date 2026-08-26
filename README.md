@@ -136,4 +136,4 @@ MongoDB is used to store user accounts, guild configuration, minions, and other 
 
 ## License
 
-No license is currently specified for this project.
+MIT License
